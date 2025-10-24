@@ -1,0 +1,76 @@
+{
+  "services": [
+    {
+      "name": "api",
+      "source": {
+        "type": "github"
+      },
+      "build": {
+        "buildCommand": null,
+        "dockerfilePath": "apps/api/Dockerfile",
+        "context": "apps/api"
+      },
+      "deploy": {
+        "numReplicas": 1
+      },
+      "envs": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "JWT_SECRET",
+          "value": "CHANGE_ME"
+        },
+        {
+          "key": "CORS_ORIGINS",
+          "value": "*"
+        },
+        {
+          "key": "S3_ENDPOINT",
+          "value": "https://s3.amazonaws.com"
+        },
+        {
+          "key": "S3_BUCKET",
+          "value": "rms-cargotrack-pro"
+        },
+        {
+          "key": "S3_KEY",
+          "value": "CHANGE_ME"
+        },
+        {
+          "key": "S3_SECRET",
+          "value": "CHANGE_ME"
+        }
+      ]
+    },
+    {
+      "name": "web",
+      "source": {
+        "type": "github"
+      },
+      "build": {
+        "buildCommand": null,
+        "dockerfilePath": "apps/web/Dockerfile",
+        "context": "apps/web"
+      },
+      "deploy": {
+        "numReplicas": 1
+      },
+      "envs": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "NEXT_PUBLIC_API_URL",
+          "value": "https://<api-domain>.up.railway.app"
+        },
+        {
+          "key": "NEXT_PUBLIC_MAPBOX_TOKEN",
+          "value": "CHANGE_ME"
+        }
+      ]
+    }
+  ]
+}
