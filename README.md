@@ -1,28 +1,27 @@
 
-# RMS CargoTrack Pro — Auto Deploy
+# RMS CargoTrack Pro — Final
 
-Este repositório está pronto para deploy no Railway com 2 serviços: API (NestJS) e Web (Next.js), usando Dockerfiles dedicados.
+Pronto para rodar localmente (Docker Compose) e fazer deploy no Railway.
 
-## Estrutura
-- apps/api: API NestJS + Prisma
-- apps/web: Next.js painel web
-- railway.json: descreve serviços, contextos e Dockerfiles
+## Rodar local (recomendado)
+1. docker compose up --build
+2. Testes:
+   - API: http://localhost:4000/health e http://localhost:4000/shipments
+   - Web: http://localhost:3000 (lista os shipments seed)
 
-## Deploy (sem setup manual)
-1) Suba este repositório no GitHub.
-2) No Railway, clique em New Project > Deploy from GitHub e selecione o repositório.
-3) O Railway criará os serviços automaticamente (api e web) lendo o railway.json.
-4) Banco de dados Postgres:
-   - Adicione um serviço Postgres no projeto (Add > Database > Postgres). O Railway injetará `DATABASE_URL` na API.
-5) Variáveis:
-   - API: defina `JWT_SECRET`, `S3_*` com seus valores. `CORS_ORIGINS` pode ser `*` em teste.
-   - Web: defina `NEXT_PUBLIC_API_URL` apontando para a URL pública da API após o primeiro deploy, e `NEXT_PUBLIC_MAPBOX_TOKEN`.
-6) Deploy: os builds rodarão via Docker automaticamente. A API executa `prisma migrate deploy` no start em produção e expõe `GET /health`.
+## Deploy no Railway
+1. Suba este projeto no GitHub.
+2. No Railway: New Project > Deploy from GitHub (este repo).
+3. Adicione Postgres ao projeto (Add > Database > PostgreSQL). A `DATABASE_URL` será injetada na API.
+4. Variáveis:
+   - API: defina `JWT_SECRET` e (opcional) `CORS_ORIGINS` e S3_*
+   - Web: defina `NEXT_PUBLIC_API_URL` para a URL pública da API (ex.: https://xxxxx.up.railway.app)
+5. A API aplica migrações automaticamente em produção. O Web consome `NEXT_PUBLIC_API_URL`.
+6. Testes públicos:
+   - API: https://<api>.up.railway.app/health
+   - Web: https://<web>.up.railway.app/
 
-## Healthcheck
-- API: GET /health -> `{ status: 'ok', uptime: <segundos> }`
-
-## Observações
-- Não commit secrets. Use variáveis no Railway.
-- Se precisar de domínio custom, adicione em Settings de cada serviço no Railway.
-
+## Notas
+- Mapbox é opcional para o primeiro teste.
+- CORS: liberal por padrão em dev. Em prod, ajuste `CORS_ORIGINS`.
+- Seeds mínimos criados automaticamente no ambiente dev (docker-compose).
