@@ -78,3 +78,6 @@ curl -X DELETE "$URL/api/shipments/ID_AQUI"
 
 
 Nota v5.1: schema sem enum (status como string) para garantir compatibilidade no Railway.
+
+
+Nota v5.1.1: imports ajustados para caminhos relativos e alias @ opcional no tsconfig.

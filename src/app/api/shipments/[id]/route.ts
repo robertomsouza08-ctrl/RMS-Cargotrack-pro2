@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server'
-import { prisma } from '@/app/lib/prisma'
-import { readJson } from '@/app/lib/request'
+import { prisma } from '../../../lib/prisma'
+import { readJson } from '../../../lib/request'
 
 const ALLOWED = new Set(['IN_TRANSIT','CHECKED_IN','DELIVERED'])
 
