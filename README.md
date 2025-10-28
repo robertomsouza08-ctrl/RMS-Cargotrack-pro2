@@ -81,3 +81,6 @@ Nota v5.1: schema sem enum (status como string) para garantir compatibilidade no
 
 
 Nota v5.1.1: imports ajustados para caminhos relativos e alias @ opcional no tsconfig.
+
+
+Nota v5.1.2: bootstrap de ambiente adicionando default DATABASE_URL=file:./dev.db e scripts com cross-env para garantir funcionamento no Railway sem variáveis.

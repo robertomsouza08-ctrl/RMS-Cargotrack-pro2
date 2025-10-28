@@ -1,7 +1,7 @@
 
+import './env'
 import { PrismaClient } from '@prisma/client'
 
-// Evitar múltiplas instâncias em desenvolvimento / hot-reload
 const globalForPrisma = global as unknown as { prisma?: PrismaClient }
 
 export const prisma = globalForPrisma.prisma || new PrismaClient()
