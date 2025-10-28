@@ -26,3 +26,6 @@ Deploy ultra simples: 1 app Next.js com API embutida.
 
 ## Observação
 Esta versão é para validação rápida. Depois podemos evoluir para Postgres/Prisma e serviços separados quando desejar.
+
+
+Nota v2: adicionadas devDependencies de TypeScript e favicon para build no Railway.
