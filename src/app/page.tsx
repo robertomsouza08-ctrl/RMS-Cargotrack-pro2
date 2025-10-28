@@ -78,7 +78,7 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
           <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:16}}>
             {shipments.map(s => (
               <Link key={s.id} href={`/shipments/${s.id}`} style={{
-                display:'block', background:'#fff', border:'1px solid #e5e7eb', borderRadius:12,
+                display:'block', background:'rgba(255,255,255,0.95)', border:'1px solid #e5e7eb', borderRadius:12,
                 padding:16, boxShadow:'0 1px 2px rgba(0,0,0,0.03)', textDecoration:'none', color:'#0B1B3B', transition:'box-shadow 0.2s'
               }} onMouseOver={(e:any)=>e.currentTarget.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'} onMouseOut={(e:any)=>e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.03)'}>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
@@ -124,7 +124,7 @@ function etaColor(iso: string){
 
 function CreateForm(){
   return (
-    <form action={createAction} style={{display:'flex', gap:8, flexWrap:'wrap', margin:'16px 0', padding:12, background:'#fff', border:'1px solid #e5e7eb', borderRadius:12}}>
+    <form action={createAction} style={{display:'flex', gap:8, flexWrap:'wrap', margin:'16px 0', padding:12, background:'rgba(255,255,255,0.95)', border:'1px solid #e5e7eb', borderRadius:12}}>
       <input name="code" placeholder="Código" required style={fieldStyle} />
       <input name="origin" placeholder="Origem" required style={fieldStyle} />
       <input name="destination" placeholder="Destino" required style={fieldStyle} />

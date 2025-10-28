@@ -106,3 +106,44 @@ curl "$URL/api/shipments?limit=10&offset=0&sortBy=eta&sortDir=asc"
 # atualizar status
 curl -X PATCH "$URL/api/shipments/ID_AQUI" -H 'content-type: application/json' -d '{"status":"DELIVERED"}'
 ```
+
+
+## v5.3 (Mapas Leaflet + Background moderno)
+- Mapa interativo na página de detalhes com Leaflet + OpenStreetMap
+- Pins coloridos por status (teal=IN_TRANSIT, amber=CHECKED_IN, green=DELIVERED)
+- Linha tracejada conectando origem → destino
+- Background moderno com containers, caminhões, navios, aviões e motos
+- Schema atualizado com campos de coordenadas (originLat, originLng, destLat, destLng)
+- Seeds com 20 shipments e coordenadas de cidades brasileiras
+
+### Novos campos no Shipment
+- originLat, originLng, destLat, destLng (Float, nullable)
+
+### Deploy
+```bash
+# Local
+npm install
+npx prisma migrate deploy
+npm run prisma:seed
+npm run dev
+
+# Railway
+# Após push, rode no Shell:
+npx prisma migrate deploy && npm run prisma:seed
+```
+
+### Criar shipment com coordenadas via API
+```bash
+curl -X POST "$URL/api/shipments" \
+  -H 'content-type: application/json' \
+  -d '{
+    "code": "SHIP-9999",
+    "origin": "São Paulo",
+    "destination": "Rio de Janeiro",
+    "status": "IN_TRANSIT",
+    "originLat": -23.5505,
+    "originLng": -46.6333,
+    "destLat": -22.9068,
+    "destLng": -43.1729
+  }'
+```

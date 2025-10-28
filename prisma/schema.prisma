@@ -9,12 +9,16 @@ datasource db {
 }
 
 model Shipment {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   code        String   @unique
   origin      String
   destination String
   status      String   @default("IN_TRANSIT")
   eta         DateTime?
+  originLat   Float?
+  originLng   Float?
+  destLat     Float?
+  destLng     Float?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

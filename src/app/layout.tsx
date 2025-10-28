@@ -55,13 +55,24 @@ const styles = {
     marginLeft: 8
   } as React.CSSProperties,
   container: { maxWidth: 980, margin: '0 auto', padding: '16px' } as React.CSSProperties,
-  footer: { padding: '12px 16px', color: '#666', fontSize: 12, borderTop: '1px solid #eee', textAlign: 'center' } as React.CSSProperties,
+  footer: { padding: '12px 16px', color: '#666', fontSize: 12, borderTop: '1px solid #eee', textAlign: 'center', background: 'rgba(255,255,255,0.95)' } as React.CSSProperties,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body style={{margin:0, fontFamily:'Inter, system-ui, Arial', background:'#f6f8fb'}}>
+      <head>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      </head>
+      <body style={{
+        margin:0, 
+        fontFamily:'Inter, system-ui, Arial', 
+        background:'#f6f8fb url(/bg-logistics.png)',
+        backgroundSize: 'cover',
+        backgroundAttachment: 'fixed',
+        backgroundPosition: 'center',
+        minHeight: '100vh'
+      }}>
         <header style={styles.header}>
           <div style={styles.brand}>
             <img src="/logo.svg" alt="RMS" width={32} height={32} />

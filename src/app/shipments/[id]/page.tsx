@@ -3,8 +3,14 @@ import React from 'react'
 import { getBaseUrl } from '../../lib/baseUrl'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import dynamic from 'next/dynamic'
 
-type Shipment = { id:string; code:string; origin:string; destination:string; status:string; eta?: string | null }
+const ShipmentMap = dynamic(() => import('../../components/ShipmentMap'), { ssr: false })
+
+type Shipment = { 
+  id:string; code:string; origin:string; destination:string; status:string; eta?: string | null;
+  originLat?: number | null; originLng?: number | null; destLat?: number | null; destLng?: number | null;
+}
 
 function StatusBadge({ status }: { status: string }){
   const map: Record<string, {bg:string,color:string,label:string}> = {
@@ -26,20 +32,39 @@ async function getShipment(id: string){
 export default async function ShipmentDetail({ params }: { params: { id: string } }){
   const s = await getShipment(params.id)
   if (!s) return (
-    <div>
+    <div style={{background:'rgba(255,255,255,0.95)', padding:16, borderRadius:12}}>
       <p style={{color:'#a00'}}>Shipment não encontrado.</p>
       <p><Link href="/">← Voltar</Link></p>
     </div>
   )
+
+  const hasCoords = s.originLat && s.originLng && s.destLat && s.destLng
+
   return (
     <div style={{maxWidth:680, margin:'0 auto'}}>
-      <p><Link href="/">← Voltar</Link></p>
-      <div style={{background:'#fff', border:'1px solid #e5e7eb', borderRadius:12, padding:16, boxShadow:'0 1px 2px rgba(0,0,0,0.03)'}}>
+      <p><Link href="/" style={{color:'#0B1B3B', fontWeight:600}}>← Voltar</Link></p>
+      <div style={{background:'rgba(255,255,255,0.95)', border:'1px solid #e5e7eb', borderRadius:12, padding:16, boxShadow:'0 2px 4px rgba(0,0,0,0.05)'}}>
         <h1 style={{marginTop:0}}>{s.code}</h1>
         <div style={{margin:'8px 0'}}><StatusBadge status={s.status} /></div>
         <div style={{color:'#334155', marginTop:8}}><strong>Origem:</strong> {s.origin}</div>
         <div style={{color:'#334155'}}><strong>Destino:</strong> {s.destination}</div>
         {s.eta && <div style={{color:'#334155'}}><strong>ETA:</strong> {new Date(s.eta).toLocaleDateString('pt-BR')}</div>}
+
+        {hasCoords ? (
+          <div style={{marginTop:16}}>
+            <h3 style={{marginBottom:8}}>Mapa da Rota</h3>
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <ShipmentMap 
+              origin={{ name: s.origin, lat: s.originLat!, lng: s.originLng! }}
+              destination={{ name: s.destination, lat: s.destLat!, lng: s.destLng! }}
+              status={s.status}
+            />
+          </div>
+        ) : (
+          <div style={{marginTop:16, padding:12, background:'#f9fafb', borderRadius:8, color:'#64748b'}}>
+            📍 Coordenadas não disponíveis para este shipment.
+          </div>
+        )}
 
         <form action={updateStatus} style={{marginTop:16, padding:12, background:'#f9fafb', borderRadius:8}}>
           <input type="hidden" name="id" value={s.id} />
