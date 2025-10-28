@@ -29,3 +29,6 @@ Esta versão é para validação rápida. Depois podemos evoluir para Postgres/P
 
 
 Nota v2: adicionadas devDependencies de TypeScript e favicon para build no Railway.
+
+
+Nota v3: uso de baseUrl absoluta em server components para evitar ERR_INVALID_URL atrás de proxy. Você pode definir NEXT_PUBLIC_BASE_URL opcionalmente.
