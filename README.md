@@ -35,3 +35,43 @@ Nota v3: uso de baseUrl absoluta em server components para evitar ERR_INVALID_UR
 
 
 Nota v4 (UI): header navy/teal/amber, cards responsivos, badges de status, página de detalhes de shipment, meta tags/icone.
+
+
+## v5 (UI + DB SQLite via Prisma)
+- Prisma + SQLite local (DATABASE_URL=file:./dev.db por padrão)
+- Seed automático através do script `npm run prisma:seed` após migrações
+- CRUD em /api/shipments
+
+### Rodar local
+- npm install
+- npx prisma migrate deploy --schema prisma/schema.prisma
+- npm run prisma:seed
+- npm run dev
+
+### Deploy no Railway (1 serviço)
+O Nixpacks instalará devDependencies e executará o build do Next. Recomenda-se adicionar um Hook de Deploy (opcional) para aplicar migrações e seed automaticamente:
+- Deploy Command (Settings > Deploy): `npx prisma migrate deploy && npm run prisma:seed && npm start`
+Se preferir manter o fluxo padrão (npm run build -> npm start), rode as migrações/seed manualmente no Shell do serviço após o primeiro deploy:
+- `npx prisma migrate deploy && npm run prisma:seed`
+
+### Endpoints
+- GET /api/shipments?q=texto&status=IN_TRANSIT|CHECKED_IN|DELIVERED
+- POST /api/shipments { code, origin, destination, status?, eta? }
+- GET /api/shipments/:id
+- PATCH /api/shipments/:id { code?, origin?, destination?, status?, eta? }
+- DELETE /api/shipments/:id
+
+### Exemplos curl
+```bash
+# listar
+curl "$URL/api/shipments"
+
+# criar
+curl -X POST "$URL/api/shipments" -H 'content-type: application/json'   -d '{"code":"CTP-100","origin":"SP","destination":"BA","status":"IN_TRANSIT","eta":"2025-11-10"}'
+
+# atualizar
+curl -X PATCH "$URL/api/shipments/ID_AQUI" -H 'content-type: application/json' -d '{"status":"DELIVERED"}'
+
+# excluir
+curl -X DELETE "$URL/api/shipments/ID_AQUI"
+```

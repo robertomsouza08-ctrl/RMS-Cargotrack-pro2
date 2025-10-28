@@ -5,17 +5,23 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start -p ${PORT:-3000}"
+    "start": "next start -p ${PORT:-3000}",
+    "postinstall": "prisma generate",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "next": "14.2.5",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "@prisma/client": "^5.20.0"
   },
   "devDependencies": {
     "typescript": "^5.6.3",
     "@types/react": "^18.3.7",
-    "@types/node": "^20.11.30"
+    "@types/node": "^20.11.30",
+    "prisma": "^5.20.0",
+    "tsx": "^4.15.7"
   },
   "engines": {
     "node": ">=18"
