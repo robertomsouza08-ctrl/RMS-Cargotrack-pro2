@@ -1,13 +1,14 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
-import { ShipmentStatus } from '@prisma/client'
 import { readJson } from '@/app/lib/request'
+
+const ALLOWED = new Set(['IN_TRANSIT','CHECKED_IN','DELIVERED'])
 
 export async function GET(req: Request){
   const { searchParams } = new URL(req.url)
   const q = searchParams.get('q')?.toLowerCase() || ''
-  const status = searchParams.get('status')?.toUpperCase() as keyof typeof ShipmentStatus | undefined
+  const status = searchParams.get('status')?.toUpperCase()
 
   const where:any = {}
   if (q) {
@@ -17,8 +18,8 @@ export async function GET(req: Request){
       { destination: { contains: q, mode: 'insensitive' } },
     ]
   }
-  if (status && ShipmentStatus[status]) {
-    where.status = ShipmentStatus[status]
+  if (status && ALLOWED.has(status)) {
+    where.status = status
   }
 
   const data = await prisma.shipment.findMany({ where, orderBy: { createdAt: 'desc' } })
@@ -38,7 +39,7 @@ export async function POST(req: Request){
         code,
         origin,
         destination,
-        status: status && ShipmentStatus[status] ? ShipmentStatus[status] : ShipmentStatus.IN_TRANSIT,
+        status: (typeof status === 'string' && ALLOWED.has(status.toUpperCase())) ? status.toUpperCase() : 'IN_TRANSIT',
         eta: eta ? new Date(eta) : null,
       }
     })

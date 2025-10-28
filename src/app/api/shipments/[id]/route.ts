@@ -1,8 +1,9 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
-import { ShipmentStatus } from '@prisma/client'
 import { readJson } from '@/app/lib/request'
+
+const ALLOWED = new Set(['IN_TRANSIT','CHECKED_IN','DELIVERED'])
 
 export async function GET(_: Request, { params }: { params: { id: string } }){
   const found = await prisma.shipment.findUnique({ where: { id: params.id } })
@@ -21,7 +22,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         ...(code ? { code } : {}),
         ...(origin ? { origin } : {}),
         ...(destination ? { destination } : {}),
-        ...(status && ShipmentStatus[status] ? { status: ShipmentStatus[status] } : {}),
+        ...(typeof status === 'string' && ALLOWED.has(status.toUpperCase()) ? { status: status.toUpperCase() } : {}),
         ...(eta !== undefined ? { eta: eta ? new Date(eta) : null } : {}),
       }
     })

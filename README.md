@@ -75,3 +75,6 @@ curl -X PATCH "$URL/api/shipments/ID_AQUI" -H 'content-type: application/json' -
 # excluir
 curl -X DELETE "$URL/api/shipments/ID_AQUI"
 ```
+
+
+Nota v5.1: schema sem enum (status como string) para garantir compatibilidade no Railway.

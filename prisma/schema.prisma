@@ -1,7 +1,4 @@
 
-// Prisma schema for RMS CargoTrack Pro (simplificado)
-// SQLite local por padrão, sem configs externas
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,14 +13,8 @@ model Shipment {
   code        String   @unique
   origin      String
   destination String
-  status      ShipmentStatus @default(IN_TRANSIT)
+  status      String   @default("IN_TRANSIT")
   eta         DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-}
-
-enum ShipmentStatus {
-  IN_TRANSIT
-  CHECKED_IN
-  DELIVERED
 }

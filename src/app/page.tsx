@@ -3,9 +3,7 @@ import React from 'react'
 import { getBaseUrl } from './lib/baseUrl'
 import Link from 'next/link'
 
-import type { Shipment as ShipmentType } from '@prisma/client'
-
-type Shipment = ShipmentType
+type Shipment = { id:string; code:string; origin:string; destination:string; status:string; eta?: string | null }
 
 function StatusBadge({ status }: { status: Shipment['status'] }){
   const map: Record<string, {bg:string,color:string,label:string}> = {
