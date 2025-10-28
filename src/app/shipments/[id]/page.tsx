@@ -2,9 +2,11 @@
 import React from 'react'
 import { getBaseUrl } from '../../lib/baseUrl'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+
 type Shipment = { id:string; code:string; origin:string; destination:string; status:string; eta?: string | null }
 
-function StatusBadge({ status }: { status: Shipment['status'] }){
+function StatusBadge({ status }: { status: string }){
   const map: Record<string, {bg:string,color:string,label:string}> = {
     IN_TRANSIT: { bg:'#E6F7F7', color:'#0B7779', label:'Em trânsito' },
     CHECKED_IN:  { bg:'#FFF6E0', color:'#8A6A00', label:'Check-in' },
@@ -35,10 +37,30 @@ export default async function ShipmentDetail({ params }: { params: { id: string 
       <div style={{background:'#fff', border:'1px solid #e5e7eb', borderRadius:12, padding:16, boxShadow:'0 1px 2px rgba(0,0,0,0.03)'}}>
         <h1 style={{marginTop:0}}>{s.code}</h1>
         <div style={{margin:'8px 0'}}><StatusBadge status={s.status} /></div>
-        <div style={{color:'#334155'}}><strong>Origem:</strong> {s.origin}</div>
+        <div style={{color:'#334155', marginTop:8}}><strong>Origem:</strong> {s.origin}</div>
         <div style={{color:'#334155'}}><strong>Destino:</strong> {s.destination}</div>
         {s.eta && <div style={{color:'#334155'}}><strong>ETA:</strong> {new Date(s.eta).toLocaleDateString('pt-BR')}</div>}
+
+        <form action={updateStatus} style={{marginTop:16, padding:12, background:'#f9fafb', borderRadius:8}}>
+          <input type="hidden" name="id" value={s.id} />
+          <label style={{display:'block', marginBottom:4, fontWeight:600}}>Alterar status:</label>
+          <select name="status" defaultValue={s.status} style={{padding:8, border:'1px solid #cbd5e1', borderRadius:8, marginRight:8}}>
+            <option value="IN_TRANSIT">Em trânsito</option>
+            <option value="CHECKED_IN">Check-in</option>
+            <option value="DELIVERED">Entregue</option>
+          </select>
+          <button type="submit" style={{background:'#17A2A4', color:'#fff', padding:'8px 12px', borderRadius:8, border:'none', fontWeight:700, cursor:'pointer'}}>Salvar</button>
+        </form>
       </div>
     </div>
   )
+}
+
+async function updateStatus(formData: FormData){
+  'use server'
+  const base = getBaseUrl()
+  const id = String(formData.get('id') || '')
+  const status = String(formData.get('status') || '')
+  await fetch(`${base}/api/shipments/${id}`, { method:'PATCH', headers: { 'content-type':'application/json' }, body: JSON.stringify({ status }) })
+  redirect(`/shipments/${id}`)
 }

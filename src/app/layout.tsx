@@ -3,17 +3,31 @@ import React from 'react'
 
 export const metadata = {
   title: 'RMS CargoTrack Pro',
-  description: 'Rastreamento de cargas - versão simplificada',
+  description: 'Rastreamento de cargas em tempo real',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/logo.svg',
   },
   openGraph: {
     title: 'RMS CargoTrack Pro',
-    description: 'Rastreamento de cargas - versão simplificada',
+    description: 'Rastreamento de cargas em tempo real',
     url: '/',
     siteName: 'RMS CargoTrack Pro',
     locale: 'pt_BR',
     type: 'website',
+    images: [
+      {
+        url: '/logo.svg',
+        width: 120,
+        height: 120,
+        alt: 'RMS CargoTrack Pro',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'RMS CargoTrack Pro',
+    description: 'Rastreamento de cargas em tempo real',
+    images: ['/logo.svg'],
   },
   themeColor: '#0B1B3B',
 }
@@ -26,12 +40,13 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderBottom: '3px solid #17A2A4' // teal
+    borderBottom: '3px solid #17A2A4'
   } as React.CSSProperties,
-  brand: { fontWeight: 700, letterSpacing: 0.4 } as React.CSSProperties,
+  brand: { display: 'flex', alignItems: 'center', gap: 8 } as React.CSSProperties,
+  brandText: { fontWeight: 700, letterSpacing: 0.4 } as React.CSSProperties,
   badge: {
     display: 'inline-block',
-    background: '#FFC107', // amber
+    background: '#FFC107',
     color: '#0B1B3B',
     padding: '2px 8px',
     borderRadius: 6,
@@ -40,7 +55,7 @@ const styles = {
     marginLeft: 8
   } as React.CSSProperties,
   container: { maxWidth: 980, margin: '0 auto', padding: '16px' } as React.CSSProperties,
-  footer: { padding: '12px 16px', color: '#666', fontSize: 12, borderTop: '1px solid #eee' } as React.CSSProperties,
+  footer: { padding: '12px 16px', color: '#666', fontSize: 12, borderTop: '1px solid #eee', textAlign: 'center' } as React.CSSProperties,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -48,8 +63,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR">
       <body style={{margin:0, fontFamily:'Inter, system-ui, Arial', background:'#f6f8fb'}}>
         <header style={styles.header}>
-          <div style={{display:'flex', alignItems:'center'}}>
-            <span style={styles.brand}>RMS CargoTrack Pro</span>
+          <div style={styles.brand}>
+            <img src="/logo.svg" alt="RMS" width={32} height={32} />
+            <span style={styles.brandText}>RMS CargoTrack Pro</span>
             <span style={styles.badge}>Pro</span>
           </div>
           <nav>

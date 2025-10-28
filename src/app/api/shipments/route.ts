@@ -9,6 +9,10 @@ export async function GET(req: Request){
   const { searchParams } = new URL(req.url)
   const q = searchParams.get('q')?.toLowerCase() || ''
   const status = searchParams.get('status')?.toUpperCase()
+  const limit = parseInt(searchParams.get('limit') || '100', 10)
+  const offset = parseInt(searchParams.get('offset') || '0', 10)
+  const sortBy = searchParams.get('sortBy') || 'createdAt'
+  const sortDir = searchParams.get('sortDir') === 'asc' ? 'asc' : 'desc'
 
   const where:any = {}
   if (q) {
@@ -22,8 +26,17 @@ export async function GET(req: Request){
     where.status = status
   }
 
-  const data = await prisma.shipment.findMany({ where, orderBy: { createdAt: 'desc' } })
-  return NextResponse.json(data)
+  const orderBy:any = {}
+  if (sortBy === 'eta') orderBy.eta = sortDir
+  else if (sortBy === 'status') orderBy.status = sortDir
+  else orderBy.createdAt = sortDir
+
+  const [data, total] = await Promise.all([
+    prisma.shipment.findMany({ where, orderBy, skip: offset, take: limit }),
+    prisma.shipment.count({ where })
+  ])
+
+  return NextResponse.json({ data, total, limit, offset })
 }
 
 export async function POST(req: Request){

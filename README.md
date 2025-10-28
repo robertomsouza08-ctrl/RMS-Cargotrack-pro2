@@ -84,3 +84,25 @@ Nota v5.1.1: imports ajustados para caminhos relativos e alias @ opcional no tsc
 
 
 Nota v5.1.2: bootstrap de ambiente adicionando default DATABASE_URL=file:./dev.db e scripts com cross-env para garantir funcionamento no Railway sem variáveis.
+
+
+## v5.2 (UI refinada e identidade visual)
+- Logo SVG no header (navy/teal/amber) e metadata OG/Twitter
+- Paginação e ordenação (por ETA, status, createdAt)
+- Estado vazio e mensagens de "Nenhum resultado"
+- Edição rápida de status na página de detalhes
+- API /api/shipments com suporte a limit, offset, sortBy, sortDir
+
+### Endpoints atualizados
+- GET /api/shipments?q=&status=&limit=12&offset=0&sortBy=createdAt&sortDir=desc
+  - Retorna: { data: Shipment[], total: number, limit: number, offset: number }
+- PATCH /api/shipments/:id { status: "IN_TRANSIT"|"CHECKED_IN"|"DELIVERED" }
+
+### Exemplos curl
+```bash
+# listar com paginação
+curl "$URL/api/shipments?limit=10&offset=0&sortBy=eta&sortDir=asc"
+
+# atualizar status
+curl -X PATCH "$URL/api/shipments/ID_AQUI" -H 'content-type: application/json' -d '{"status":"DELIVERED"}'
+```
