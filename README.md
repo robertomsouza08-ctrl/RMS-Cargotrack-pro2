@@ -32,3 +32,6 @@ Nota v2: adicionadas devDependencies de TypeScript e favicon para build no Railw
 
 
 Nota v3: uso de baseUrl absoluta em server components para evitar ERR_INVALID_URL atrás de proxy. Você pode definir NEXT_PUBLIC_BASE_URL opcionalmente.
+
+
+Nota v4 (UI): header navy/teal/amber, cards responsivos, badges de status, página de detalhes de shipment, meta tags/icone.
