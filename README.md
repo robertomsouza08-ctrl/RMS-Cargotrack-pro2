@@ -196,3 +196,9 @@ Observação: Em produção, `DATABASE_URL` é obrigatório; o app falha cedo se
 ## v5.5.1 (Auth fix)
 - Atualizado `nodemailer` para `^7.0.7` para compatibilidade com `next-auth@4.24.x`.
 - Caso veja `npm ERR! ERESOLVE` sobre peerDependencies, rode `npm install` novamente ou limpe cache (`npm cache verify`).
+
+
+## v5.5.2 (Fix build com NextAuth)
+- Moveu a checagem de sessão do CreateForm para o Server Component da página (Home) e criou CreateForm como Client Component usando useSession.
+- Ajustou shipments/[id]/page.tsx para export default async e checagem de sessão antes do retorno.
+- Regra: getServerSession() apenas em Server Components; em Client Components use useSession.
