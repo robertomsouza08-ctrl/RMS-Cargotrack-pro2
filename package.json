@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start -p ${PORT:-3000}",
     "postinstall": "prisma generate",
-    "prisma:migrate:deploy": "cross-env DATABASE_URL=${DATABASE_URL:-file:./dev.db} prisma migrate deploy",
-    "prisma:seed": "cross-env DATABASE_URL=${DATABASE_URL:-file:./dev.db} tsx scripts/seed.ts"
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "next": "14.2.5",

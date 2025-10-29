@@ -147,3 +147,30 @@ curl -X POST "$URL/api/shipments" \
     "destLng": -43.1729
   }'
 ```
+
+
+## v5.4 (Migração para Postgres)
+- Provider do Prisma atualizado para `postgresql`
+- Migration de inicialização para Postgres
+- Necessário definir `DATABASE_URL` (Railway Database → Add Reference)
+
+### Railway (Passo a passo)
+1. No projeto, clique em New → Database → PostgreSQL
+2. No seu serviço web, abra Variables → Add Reference → selecione DATABASE_URL do Postgres
+3. Deploy
+4. No Shell do serviço, execute:
+```
+npx prisma migrate deploy
+npm run prisma:seed
+```
+
+### Desenvolvimento local (Docker Postgres opcional)
+```
+docker run --name rms-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:15
+export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
+npx prisma migrate deploy
+npm run prisma:seed
+npm run dev
+```
+
+Observação: Em produção, `DATABASE_URL` é obrigatório; o app falha cedo se não estiver definido.
