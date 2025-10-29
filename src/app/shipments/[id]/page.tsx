@@ -43,6 +43,8 @@ export default async function ShipmentDetail({ params }: { params: { id: string 
 
   const session = await getServerSession()
   const isAuthed = !!session
+  const session = await getServerSession()
+  const isAuthed = !!session
   return (
     <div style={{maxWidth:680, margin:'0 auto'}}>
       <p><Link href="/" style={{color:'#0B1B3B', fontWeight:600}}>← Voltar</Link></p>
