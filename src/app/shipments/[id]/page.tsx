@@ -1,4 +1,3 @@
-
 import Link from 'next/link'
 import { getServerSession } from 'next-auth'
 import { prisma } from '../../../lib/prisma'
@@ -8,12 +7,11 @@ export default async function ShipmentDetail({ params }: { params: { id: string 
   const session = await getServerSession()
   const isAuthed = !!session
 
-  // Load shipment
   const s = await prisma.shipment.findUnique({ where: { id: params.id } })
   if (!s) {
     return (
       <div style={{maxWidth:680, margin:'0 auto'}}>
-        <p><Link href="/" style={{color:'#0B1B3B', fontWeight:600}}>← Voltar</Link></p>
+        <p><Link href="/" style={{color:'#fff', fontWeight:600}}>← Voltar</Link></p>
         <div style={{background:'rgba(255,255,255,0.95)', border:'1px solid #e5e7eb', borderRadius:12, padding:16}}>
           <h1>Shipment não encontrado</h1>
         </div>
@@ -23,7 +21,7 @@ export default async function ShipmentDetail({ params }: { params: { id: string 
 
   return (
     <div style={{maxWidth:680, margin:'0 auto'}}>
-      <p><Link href="/" style={{color:'#0B1B3B', fontWeight:600}}>← Voltar</Link></p>
+      <p><Link href="/" style={{color:'#fff', fontWeight:600}}>← Voltar</Link></p>
 
       <div style={{background:'rgba(255,255,255,0.95)', border:'1px solid #e5e7eb', borderRadius:12, padding:16, boxShadow:'0 2px 4px rgba(0,0,0,0.05)'}}>
         <h1 style={{marginTop:0}}>{s.code}</h1>

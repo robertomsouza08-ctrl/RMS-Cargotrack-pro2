@@ -1,21 +1,19 @@
-
 'use client'
-import React from 'react'
 import { signIn } from 'next-auth/react'
 
-export default function SignInPage(){
+export default function SignIn() {
   return (
-    <div style={{maxWidth:420, margin:'40px auto', background:'rgba(255,255,255,0.95)', border:'1px solid #e5e7eb', borderRadius:12, padding:24}}>
+    <div style={{maxWidth:400, margin:'0 auto', padding:24, background:'rgba(255,255,255,0.95)', borderRadius:12, boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
       <h1 style={{marginTop:0}}>Entrar</h1>
-      <p style={{color:'#475569', marginBottom:16}}>Escolha um provedor para autenticar:</p>
-      <div style={{display:'grid', gap:12}}>
-        <button onClick={() => signIn('github')} style={btn('#0B1B3B','#fff')}>Entrar com GitHub</button>
-        <button onClick={() => signIn('google')} style={btn('#DB4437','#fff')}>Entrar com Google</button>
+      <p style={{color:'#6b7280', marginBottom:24}}>Escolha um provedor para autenticar:</p>
+      <div style={{display:'flex', flexDirection:'column', gap:12}}>
+        <button onClick={() => signIn('github', { callbackUrl: '/' })} style={{padding:'12px 16px', background:'#24292e', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer'}}>
+          Entrar com GitHub
+        </button>
+        <button onClick={() => signIn('google', { callbackUrl: '/' })} style={{padding:'12px 16px', background:'#4285f4', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer'}}>
+          Entrar com Google
+        </button>
       </div>
     </div>
   )
-}
-
-function btn(bg:string, color:string): React.CSSProperties {
-  return { background:bg, color, padding:'10px 12px', borderRadius:8, border:'none', cursor:'pointer', fontWeight:700 }
 }
