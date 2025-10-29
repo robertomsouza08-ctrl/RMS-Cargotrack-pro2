@@ -1,0 +1,24 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Shipment {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  origin      String
+  destination String
+  status      String   @default("IN_TRANSIT")
+  eta         DateTime?
+  originLat   Float?
+  originLng   Float?
+  destLat     Float?
+  destLng     Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <rect width="120" height="120" fill="#0B1B3B" rx="12"/>
+  <path d="M30 40 L50 40 L50 50 L40 50 L40 80 L30 80 Z" fill="#17A2A4"/>
+  <path d="M55 40 L75 40 L75 60 L65 60 L65 80 L55 80 Z" fill="#FFC107"/>
+  <circle cx="85" cy="50" r="8" fill="#17A2A4"/>
+  <circle cx="85" cy="70" r="8" fill="#FFC107"/>
+  <text x="60" y="105" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17A2A4" text-anchor="middle">RMS</text>
+</svg>
