@@ -191,3 +191,8 @@ Observação: Em produção, `DATABASE_URL` é obrigatório; o app falha cedo se
 ### Redirect URIs
 - GitHub: https://SEU_DOMINIO/api/auth/callback/github
 - Google: https://SEU_DOMINIO/api/auth/callback/google
+
+
+## v5.5.1 (Auth fix)
+- Atualizado `nodemailer` para `^7.0.7` para compatibilidade com `next-auth@4.24.x`.
+- Caso veja `npm ERR! ERESOLVE` sobre peerDependencies, rode `npm install` novamente ou limpe cache (`npm cache verify`).

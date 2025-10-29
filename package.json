@@ -17,7 +17,8 @@
     "@prisma/client": "^5.20.0",
     "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1",
-    "next-auth": "^4.24.7"
+    "next-auth": "^4.24.7",
+    "nodemailer": "^7.0.7"
   },
   "devDependencies": {
     "typescript": "^5.6.3",
