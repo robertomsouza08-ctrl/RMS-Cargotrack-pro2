@@ -1,4 +1,3 @@
-
 import Link from 'next/link'
 import { getServerSession } from 'next-auth'
 import { CreateForm } from './components/CreateForm'
@@ -18,7 +17,6 @@ export default async function Home({
   const session = await getServerSession()
   const isAuthed = !!session
 
-  // Build where clause for search
   const where: any = {}
   if (q) {
     where.OR = [
@@ -31,7 +29,6 @@ export default async function Home({
     where.status = status
   }
 
-  // Fetch shipments
   const shipments = await prisma.shipment.findMany({
     where,
     orderBy: { [sortBy]: sortDir },
@@ -39,7 +36,7 @@ export default async function Home({
 
   return (
     <div>
-      <h1 style={{margin:'8px 0'}}>Visão Geral</h1>
+      <h1 style={{margin:'8px 0', color:'#fff'}}>Visão Geral</h1>
 
       <form action="/" method="get" style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:16}}>
         <input name="q" placeholder="Buscar por código, origem, destino" defaultValue={q} style={{flex:'1 1 320px', padding:8, border:'1px solid #cbd5e1', borderRadius:8}} />
@@ -58,7 +55,7 @@ export default async function Home({
           <option value="desc">Desc</option>
           <option value="asc">Asc</option>
         </select>
-        <button type="submit" style={{padding:'8px 12px', border:'1px solid #cbd5e1', borderRadius:8, background:'#fff'}}>Filtrar</button>
+        <button type="submit" style={{padding:'8px 12px', border:'1px solid #cbd5e1', borderRadius:8, background:'#fff', cursor:'pointer'}}>Filtrar</button>
       </form>
 
       {isAuthed ? (
