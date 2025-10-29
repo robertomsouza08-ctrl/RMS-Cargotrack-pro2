@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import React from 'react'
 import { getBaseUrl } from './lib/baseUrl'
 import Link from 'next/link'
+import { CreateForm } from './components/CreateForm'
 
 type Shipment = { id:string; code:string; origin:string; destination:string; status:string; eta?: string | null }
 
@@ -46,6 +47,8 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
 
   const session = await getServerSession()
   const isAuthed = !!session
+  const session = await getServerSession()
+  const isAuthed = !!session
   return (
     <div>
       <h1 style={{margin:'8px 0'}}>Visão Geral</h1>
@@ -69,7 +72,11 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
         <button type="submit" style={{background:'#0B1B3B', color:'#fff', padding:'8px 12px', borderRadius:8, border:'none', cursor:'pointer'}}>Aplicar</button>
       </form>
 
-      {isAuthed ? <CreateForm /> : (<div style={{padding:12, background:'rgba(255,255,255,0.95)', border:'1px solid #e5e7eb', borderRadius:12, margin:'16px 0'}}><strong>Precisa estar autenticado para criar shipments.</strong> <a href="/signin" style={{color:'#17A2A4'}}>Entrar</a></div>)}
+      {isAuthed ? {isAuthed ? <CreateForm action={createAction} /> : (
+  <div style={{padding:12, background:'rgba(255,255,255,0.95)', border:'1px solid #e5e7eb', borderRadius:12, margin:'16px 0'}}>
+    <strong>Precisa estar autenticado para criar shipments.</strong> <a href="/signin" style={{color:'#17A2A4'}}>Entrar</a>
+  </div>
+)} : (<div style={{padding:12, background:'rgba(255,255,255,0.95)', border:'1px solid #e5e7eb', borderRadius:12, margin:'16px 0'}}><strong>Precisa estar autenticado para criar shipments.</strong> <a href="/signin" style={{color:'#17A2A4'}}>Entrar</a></div>)}
 
       {shipments.length === 0 ? (
         <div style={{padding:32, textAlign:'center', color:'#64748b'}}>
@@ -126,6 +133,8 @@ function etaColor(iso: string){
 }
 
 function CreateForm(){
+  const session = await getServerSession()
+  const isAuthed = !!session
   const session = await getServerSession()
   const isAuthed = !!session
   return (
