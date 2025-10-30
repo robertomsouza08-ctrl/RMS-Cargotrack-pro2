@@ -1,4 +1,4 @@
-# RMS CargoTrack Pro - v5.5.5
+# RMS CargoTrack Pro - v5.5.6
 
 Sistema de rastreamento de cargas com autenticação NextAuth.
 
@@ -20,39 +20,39 @@ Sistema de rastreamento de cargas com autenticação NextAuth.
    GOOGLE_SECRET="your-google-secret"
    ```
 
-3. Rode migrations:
+3. Rode migrations e inicie:
    ```bash
-   npx prisma migrate deploy
-   npx prisma generate
+   npm run build
+   npm start
+   ```
+
+   O comando `npm start` automaticamente:
+   - Aplica migrations pendentes
+   - Inicia o servidor Next.js
+
+4. (Opcional) Popular com dados de teste:
+   ```bash
    npm run prisma:seed
    ```
 
-4. Inicie:
-   ```bash
-   npm run dev
-   ```
-
 ## Deploy Railway
-
-**IMPORTANTE:** Após o primeiro deploy bem-sucedido, rode apenas uma vez:
-```bash
-npm run prisma:seed
-```
-
-As migrations serão aplicadas automaticamente pelo script `postbuild`.
-
-## Deploy Railway (Detalhado)
 
 1. Crie novo projeto no Railway
 2. Adicione PostgreSQL database
 3. Configure variáveis de ambiente (veja .env.example)
 4. Conecte ao GitHub repo
 5. Railway detectará automaticamente e fará deploy
-6. Após deploy, rode via Railway CLI ou console:
+6. **Migrations são aplicadas automaticamente no start!**
+7. (Opcional) Após primeiro deploy, rode no console:
    ```bash
-   npx prisma migrate deploy
    npm run prisma:seed
    ```
+
+## Como funciona
+
+- **Build**: `prisma generate && next build` (sem conexão ao DB)
+- **Start**: `prisma migrate deploy && next start` (aplica migrations e inicia)
+- **Seed**: `npm run prisma:seed` (manual, apenas quando necessário)
 
 ## Estrutura
 
@@ -63,11 +63,16 @@ As migrations serão aplicadas automaticamente pelo script `postbuild`.
 - src/lib/prisma.ts - Prisma client singleton
 - prisma/schema.prisma - Database schema
 
+## v5.5.6 Changes
+
+- **FIX**: Movido `prisma migrate deploy` de `postbuild` para `start`
+- Build não precisa mais de conexão com banco de dados
+- Migrations aplicadas automaticamente quando o app inicia
+- Deploy no Railway agora funciona sem erros de conexão
+
 ## v5.5.5 Changes
 
-- Adicionado script `postbuild` que roda automaticamente `prisma generate` e `prisma migrate deploy` após o build
-- Migrations agora são aplicadas automaticamente no Railway após cada deploy
-- Você só precisa rodar `npm run prisma:seed` manualmente uma vez após o primeiro deploy
+- Tentativa de automatizar migrations no postbuild (causou erro de conexão)
 
 ## v5.5.4 Changes
 

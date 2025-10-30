@@ -4,12 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "prisma generate && next build",
+    "start": "prisma migrate deploy && next start",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
-    "prisma:seed": "tsx prisma/seed.ts",
-    "postbuild": "prisma generate && prisma migrate deploy"
+    "prisma:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "next": "^14.2.5",
