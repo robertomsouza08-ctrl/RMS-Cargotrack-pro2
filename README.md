@@ -1,4 +1,4 @@
-# RMS CargoTrack Pro - v5.5.4
+# RMS CargoTrack Pro - v5.5.5
 
 Sistema de rastreamento de cargas com autenticação NextAuth.
 
@@ -34,6 +34,15 @@ Sistema de rastreamento de cargas com autenticação NextAuth.
 
 ## Deploy Railway
 
+**IMPORTANTE:** Após o primeiro deploy bem-sucedido, rode apenas uma vez:
+```bash
+npm run prisma:seed
+```
+
+As migrations serão aplicadas automaticamente pelo script `postbuild`.
+
+## Deploy Railway (Detalhado)
+
 1. Crie novo projeto no Railway
 2. Adicione PostgreSQL database
 3. Configure variáveis de ambiente (veja .env.example)
@@ -53,6 +62,12 @@ Sistema de rastreamento de cargas com autenticação NextAuth.
 - src/app/api/auth/[...nextauth]/route.ts - NextAuth config
 - src/lib/prisma.ts - Prisma client singleton
 - prisma/schema.prisma - Database schema
+
+## v5.5.5 Changes
+
+- Adicionado script `postbuild` que roda automaticamente `prisma generate` e `prisma migrate deploy` após o build
+- Migrations agora são aplicadas automaticamente no Railway após cada deploy
+- Você só precisa rodar `npm run prisma:seed` manualmente uma vez após o primeiro deploy
 
 ## v5.5.4 Changes
 
