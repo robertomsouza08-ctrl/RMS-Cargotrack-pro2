@@ -28,7 +28,7 @@ export default async function AdminPage() {
   }
 
   const users = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' }
+    orderBy: { email: 'asc' }
   })
 
   return (
