@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth'
 import Link from 'next/link'
+import { prisma } from '../lib/prisma'
 
 export const metadata = {
   title: 'RMS CargoTrack Pro',
@@ -8,6 +9,15 @@ export const metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession()
+
+  let isAdmin = false
+  if (session?.user?.email) {
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+    isAdmin = user?.role === 'ADMIN'
+  }
+
   return (
     <html lang="pt-BR">
       <body style={{margin:0, fontFamily:'system-ui, sans-serif', background:'linear-gradient(135deg, #0B1B3B 0%, #17A2A4 100%)', minHeight:'100vh', padding:16}}>
@@ -17,6 +27,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {session ? (
               <>
                 <span style={{color:'#0B1B3B'}}>Olá, {session.user?.name || session.user?.email}</span>
+                {isAdmin && (
+                  <Link href="/admin" style={{color:'#17A2A4', fontWeight:600}}>Admin</Link>
+                )}
                 <a href="/api/auth/signout" style={{color:'#17A2A4', fontWeight:600}}>Sair</a>
               </>
             ) : (
