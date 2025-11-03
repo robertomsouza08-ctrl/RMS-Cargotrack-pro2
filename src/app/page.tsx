@@ -4,7 +4,7 @@
 import dynamic from "next/dynamic";
 
 // Carrega o mapa só no client
-const MapClient = dynamic(() => import("./../components/MapClient"), { ssr: false });
+const MapClient = dynamic(() => import("../components/MapClient"), { ssr: false });
 
 function MobileHeader() {
   return (
