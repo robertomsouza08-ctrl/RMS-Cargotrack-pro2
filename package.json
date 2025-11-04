@@ -2,6 +2,7 @@
   "name": "rms-cargotrack-pro-simple",
   "version": "1.0.0",
   "private": true,
+  "start": "node prisma/check-seed.js && npx tsx prisma/seed-deliveries.ts && next start"
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
