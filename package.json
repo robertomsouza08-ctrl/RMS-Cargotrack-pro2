@@ -2,16 +2,17 @@
   "name": "rms-cargotrack-pro-simple",
   "version": "1.0.0",
   "private": true,
-  "start": "node prisma/check-seed.js && npx tsx prisma/seed-deliveries.ts && next start"
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "node prisma/check-seed.js && next start",
+    "start": "node prisma/check-seed.js && npx tsx prisma/seed-deliveries.ts && next start",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
     "seed:deliveries": "tsx prisma/seed-deliveries.ts",
-    "clear:deliveries": "tsx prisma/clear-deliveries.ts"
+    "clear:deliveries": "tsx prisma/clear-deliveries.ts",
+    "simulate:movement": "tsx prisma/simulate-movement.ts",
+    "simulate:once": "tsx prisma/simulate-movement-once.ts"
   },
   "dependencies": {
     "next": "^14.2.5",
