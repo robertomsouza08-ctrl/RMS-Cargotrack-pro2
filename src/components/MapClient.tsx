@@ -3,13 +3,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import type { LatLngExpression } from "leaflet";
 
 // Carrega react-leaflet apenas no client
 const MapContainer = dynamic(() => import("react-leaflet").then(m => m.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then(m => m.TileLayer), { ssr: false });
 const Marker = dynamic(() => import("react-leaflet").then(m => m.Marker), { ssr: false });
 const Popup = dynamic(() => import("react-leaflet").then(m => m.Popup), { ssr: false });
+const useMap = dynamic(() => import("react-leaflet").then(m => m.useMap), { ssr: false });
 
 import L from "leaflet";
 
@@ -32,6 +32,14 @@ function makeUserIcon() {
   });
 }
 
+function MapUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [center, map]);
+  return null;
+}
+
 export default function MapClient({
   initialCenter = { lat: -23.55052, lng: -46.633308 },
   height = "70vh",
@@ -44,7 +52,7 @@ export default function MapClient({
   sendPings?: boolean;
 }) {
   const [state, setState] = useState<GeoState>({ permission: "prompt" });
-  const [center, setCenter] = useState<LatLngExpression>([initialCenter.lat, initialCenter.lng]);
+  const [center, setCenter] = useState<[number, number]>([initialCenter.lat, initialCenter.lng]);
   const userIcon = useMemo(() => makeUserIcon(), []);
   const hasCenteredOnFirstFix = useRef(false);
   const watchIdRef = useRef<number | null>(null);
@@ -131,6 +139,7 @@ export default function MapClient({
         zoom={zoom}
         style={{ width: "100%", height: "100%", borderRadius: 8, overflow: "hidden" }}
       >
+        <MapUpdater center={center} />
         <TileLayer
           attribution='&copy; OpenStreetMap'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
