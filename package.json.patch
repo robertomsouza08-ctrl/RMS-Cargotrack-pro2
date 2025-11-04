@@ -1,10 +1,10 @@
 
-ADICIONE estes scripts ao seu package.json existente:
+ADICIONE estes scripts ao seu package.json:
 
 "scripts": {
   ...seus scripts existentes...,
-  "seed:deliveries": "tsx prisma/seed-deliveries.ts",
-  "clear:deliveries": "tsx prisma/clear-deliveries.ts"
+  "simulate:movement": "tsx prisma/simulate-movement.ts",
+  "simulate:once": "tsx prisma/simulate-movement-once.ts"
 }
 
 Exemplo completo:
@@ -13,10 +13,9 @@ Exemplo completo:
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "node prisma/check-seed.js && next start",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate deploy",
-    "prisma:seed": "tsx prisma/seed.ts",
     "seed:deliveries": "tsx prisma/seed-deliveries.ts",
-    "clear:deliveries": "tsx prisma/clear-deliveries.ts"
+    "clear:deliveries": "tsx prisma/clear-deliveries.ts",
+    "simulate:movement": "tsx prisma/simulate-movement.ts",
+    "simulate:once": "tsx prisma/simulate-movement-once.ts"
   }
 }
