@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import type { LatLngExpression } from "leaflet";
 
 // Carrega react-leaflet apenas no client
 const MapContainer = dynamic(() => import("react-leaflet").then(m => m.MapContainer), { ssr: false });
@@ -43,7 +44,7 @@ export default function MapClient({
   sendPings?: boolean;
 }) {
   const [state, setState] = useState<GeoState>({ permission: "prompt" });
-  const [center, setCenter] = useState(initialCenter);
+  const [center, setCenter] = useState<LatLngExpression>([initialCenter.lat, initialCenter.lng]);
   const userIcon = useMemo(() => makeUserIcon(), []);
   const hasCenteredOnFirstFix = useRef(false);
   const watchIdRef = useRef<number | null>(null);
@@ -98,7 +99,7 @@ export default function MapClient({
           error: undefined,
         }));
         if (!hasCenteredOnFirstFix.current) {
-          setCenter({ lat: latitude, lng: longitude });
+          setCenter([latitude, longitude]);
           hasCenteredOnFirstFix.current = true;
         }
         void sendPing(latitude, longitude, accuracy);
@@ -126,7 +127,7 @@ export default function MapClient({
   return (
     <div style={{ width: "100%", height }}>
       <MapContainer
-        center={[center.lat, center.lng]}
+        center={center}
         zoom={zoom}
         style={{ width: "100%", height: "100%", borderRadius: 8, overflow: "hidden" }}
       >
