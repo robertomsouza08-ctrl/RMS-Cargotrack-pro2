@@ -3,14 +3,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-
-// Carrega react-leaflet apenas no client
-const MapContainer = dynamic(() => import("react-leaflet").then(m => m.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import("react-leaflet").then(m => m.TileLayer), { ssr: false });
-const Marker = dynamic(() => import("react-leaflet").then(m => m.Marker), { ssr: false });
-const Popup = dynamic(() => import("react-leaflet").then(m => m.Popup), { ssr: false });
-const useMap = dynamic(() => import("react-leaflet").then(m => m.useMap), { ssr: false });
-
 import L from "leaflet";
 
 type GeoState = {
@@ -32,13 +24,59 @@ function makeUserIcon() {
   });
 }
 
-function MapUpdater({ center }: { center: [number, number] }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(center, map.getZoom());
-  }, [center, map]);
-  return null;
+// Componente interno que será carregado dinamicamente junto com o mapa
+function MapContent({
+  center,
+  zoom,
+  position,
+  userIcon,
+  state,
+}: {
+  center: [number, number];
+  zoom: number;
+  position: { lat: number; lng: number; accuracy?: number } | null;
+  userIcon: L.DivIcon;
+  state: GeoState;
+}) {
+  // Agora podemos importar diretamente porque este componente só roda no client
+  const { MapContainer, TileLayer, Marker, Popup, useMap } = require("react-leaflet");
+
+  function MapUpdater({ center }: { center: [number, number] }) {
+    const map = useMap();
+    useEffect(() => {
+      map.setView(center, map.getZoom());
+    }, [center, map]);
+    return null;
+  }
+
+  return (
+    <MapContainer
+      center={center}
+      zoom={zoom}
+      style={{ width: "100%", height: "100%", borderRadius: 8, overflow: "hidden" }}
+    >
+      <MapUpdater center={center} />
+      <TileLayer
+        attribution='&copy; OpenStreetMap'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      {position && (
+        <Marker position={[position.lat, position.lng]} icon={userIcon}>
+          <Popup>
+            <div style={{ fontSize: 12 }}>
+              <div><strong>Você</strong></div>
+              {position.accuracy ? <div>Acurácia: {Math.round(position.accuracy)} m</div> : null}
+              {state.lastUpdate ? <div>Atualizado: {new Date(state.lastUpdate).toLocaleTimeString()}</div> : null}
+            </div>
+          </Popup>
+        </Marker>
+      )}
+    </MapContainer>
+  );
 }
+
+// Carrega o MapContent dinamicamente
+const DynamicMapContent = dynamic(() => Promise.resolve(MapContent), { ssr: false });
 
 export default function MapClient({
   initialCenter = { lat: -23.55052, lng: -46.633308 },
@@ -81,7 +119,7 @@ export default function MapClient({
     const sendPing = async (lat: number, lng: number, accuracy?: number) => {
       if (!sendPings) return;
       const now = Date.now();
-      if (now - lastPingAtRef.current < 8000) return; // limita a ~8s
+      if (now - lastPingAtRef.current < 8000) return;
       lastPingAtRef.current = now;
       try {
         await fetch("/api/location/ping", {
@@ -134,28 +172,13 @@ export default function MapClient({
 
   return (
     <div style={{ width: "100%", height }}>
-      <MapContainer
+      <DynamicMapContent
         center={center}
         zoom={zoom}
-        style={{ width: "100%", height: "100%", borderRadius: 8, overflow: "hidden" }}
-      >
-        <MapUpdater center={center} />
-        <TileLayer
-          attribution='&copy; OpenStreetMap'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {position && (
-          <Marker position={[position.lat, position.lng]} icon={userIcon}>
-            <Popup>
-              <div style={{ fontSize: 12 }}>
-                <div><strong>Você</strong></div>
-                {position.accuracy ? <div>Acurácia: {Math.round(position.accuracy)} m</div> : null}
-                {state.lastUpdate ? <div>Atualizado: {new Date(state.lastUpdate).toLocaleTimeString()}</div> : null}
-              </div>
-            </Popup>
-          </Marker>
-        )}
-      </MapContainer>
+        position={position}
+        userIcon={userIcon}
+        state={state}
+      />
 
       <div style={{ padding: "8px 4px", fontSize: 12 }}>
         {state.permission === "unsupported" && (
