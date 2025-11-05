@@ -1,50 +1,70 @@
 
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-export async function GET(request: Request) {
+const prisma = new PrismaClient();
+
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const trackingCode = searchParams.get("trackingCode");
-    const limit = parseInt(searchParams.get("limit") || "50");
 
     if (!trackingCode) {
-      return NextResponse.json({ error: "trackingCode obrigatório" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Código de rastreamento não fornecido" },
+        { status: 400 }
+      );
     }
 
-    const delivery = await prisma.delivery.findUnique({
-      where: { trackingCode },
-      include: {
-        trackingDevice: {
-          include: {
-            locationPings: {
-              orderBy: { timestamp: "desc" },
-              take: limit,
-            },
-          },
-        },
-      },
-    });
+    // Busca a entrega e o dispositivo
+    const delivery = await prisma.$queryRaw<Array<{
+      id: string;
+      trackingCode: string;
+      deviceId: string | null;
+    }>>`
+      SELECT 
+        d.id,
+        d."trackingCode",
+        td.id as "deviceId"
+      FROM "Delivery" d
+      LEFT JOIN "TrackingDevice" td ON td."deliveryId" = d.id
+      WHERE d."trackingCode" = ${trackingCode}
+      LIMIT 1
+    `;
 
-    if (!delivery) {
-      return NextResponse.json({ error: "Entrega não encontrada" }, { status: 404 });
+    if (!delivery || delivery.length === 0) {
+      return NextResponse.json(
+        { error: "Entrega não encontrada" },
+        { status: 404 }
+      );
     }
 
-    const pings = delivery.trackingDevice?.locationPings?.map((p) => ({
-      lat: p.lat,
-      lng: p.lng,
-      timestamp: p.timestamp.toISOString(),
-    })) || [];
+    const deviceId = delivery[0].deviceId;
 
-    return NextResponse.json({ pings });
+    if (!deviceId) {
+      return NextResponse.json([]);
+    }
+
+    // Busca o histórico de pings
+    const pings = await prisma.$queryRaw<Array<{
+      id: string;
+      lat: number;
+      lng: number;
+      timestamp: Date;
+      source: string;
+    }>>`
+      SELECT id, lat, lng, timestamp, source
+      FROM "LocationPing"
+      WHERE "deviceId" = ${deviceId}
+      ORDER BY timestamp ASC
+    `;
+
+    return NextResponse.json(pings);
   } catch (error) {
-    console.error("Erro ao buscar histórico:", error);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+    console.error("Erro ao buscar histórico de localização:", error);
+    return NextResponse.json(
+      { error: "Erro ao buscar histórico" },
+      { status: 500 }
+    );
   }
 }
