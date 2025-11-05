@@ -3,43 +3,45 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function main() {
+async function clearDeliveries() {
   console.log("🗑️  Limpando entregas de teste...");
 
-  // Deleta na ordem correta (devido às foreign keys)
-  const deletedPings = await prisma.locationPing.deleteMany({
-    where: {
-      source: "seed",
-    },
-  });
-  console.log(`   ✅ ${deletedPings.count} pings deletados`);
-
-  const deletedDevices = await prisma.trackingDevice.deleteMany({
-    where: {
-      deviceIdentifier: {
-        startsWith: "DEVICE-RMS-",
+  try {
+    // Deleta na ordem correta (devido às foreign keys)
+    const deletedPings = await prisma.locationPing.deleteMany({
+      where: {
+        source: "seed",
       },
-    },
-  });
-  console.log(`   ✅ ${deletedDevices.count} dispositivos deletados`);
+    });
 
-  const deletedDeliveries = await prisma.delivery.deleteMany({
-    where: {
-      trackingCode: {
-        startsWith: "RMS-",
+    const deletedDevices = await prisma.trackingDevice.deleteMany({
+      where: {
+        delivery: {
+          trackingCode: {
+            startsWith: "RMS",
+          },
+        },
       },
-    },
-  });
-  console.log(`   ✅ ${deletedDeliveries.count} entregas deletadas`);
+    });
 
-  console.log("\n✅ Limpeza concluída!");
+    const deletedDeliveries = await prisma.delivery.deleteMany({
+      where: {
+        trackingCode: {
+          startsWith: "RMS",
+        },
+      },
+    });
+
+    console.log(`✅ ${deletedPings.count} pings deletados`);
+    console.log(`✅ ${deletedDevices.count} dispositivos deletados`);
+    console.log(`✅ ${deletedDeliveries.count} entregas deletadas`);
+    console.log("🎉 Limpeza concluída!");
+  } catch (error) {
+    console.error("❌ Erro ao limpar entregas:", error);
+    throw error;
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
-main()
-  .catch((e) => {
-    console.error("❌ Erro na limpeza:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+clearDeliveries();

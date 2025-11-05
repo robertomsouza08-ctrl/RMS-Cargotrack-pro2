@@ -3,90 +3,93 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Adiciona pequena variação aleatória (simula GPS real)
-function addNoise(coord: { lat: number; lng: number }, meters: number = 20) {
-  const latOffset = (Math.random() - 0.5) * (meters / 111000);
-  const lngOffset = (Math.random() - 0.5) * (meters / 111000);
+function moveTowards(
+  currentLat: number,
+  currentLng: number,
+  targetLat: number,
+  targetLng: number,
+  stepSize: number = 0.001
+) {
+  const latDiff = targetLat - currentLat;
+  const lngDiff = targetLng - currentLng;
+  const distance = Math.sqrt(latDiff ** 2 + lngDiff ** 2);
+
+  if (distance < stepSize) {
+    return { lat: targetLat, lng: targetLng, arrived: true };
+  }
+
+  const ratio = stepSize / distance;
   return {
-    lat: coord.lat + latOffset,
-    lng: coord.lng + lngOffset,
+    lat: currentLat + latDiff * ratio,
+    lng: currentLng + lngDiff * ratio,
+    arrived: false,
   };
 }
 
-async function main() {
-  console.log("🚚 Atualizando posições das entregas (execução única)...");
+async function simulateMovementOnce() {
+  console.log("🚚 Atualizando posições das entregas...");
 
-  const deliveries = await prisma.delivery.findMany({
-    where: { status: "EM_TRANSITO" },
-    include: {
-      trackingDevice: {
-        include: {
-          locationPings: {
-            orderBy: { timestamp: "desc" },
-            take: 2,
+  try {
+    const deliveries = await prisma.delivery.findMany({
+      where: { status: "EM_TRANSITO" },
+      include: {
+        trackingDevice: {
+          include: {
+            locationPings: {
+              orderBy: { timestamp: "desc" },
+              take: 1,
+            },
           },
         },
       },
-    },
-  });
-
-  if (deliveries.length === 0) {
-    console.log("⚠️  Nenhuma entrega EM_TRANSITO encontrada");
-    return;
-  }
-
-  for (const delivery of deliveries) {
-    const device = delivery.trackingDevice;
-    if (!device || !device.isActive) continue;
-
-    const pings = device.locationPings;
-    if (pings.length === 0) continue;
-
-    const lastPing = pings[0];
-    const previousPing = pings[1] || lastPing;
-
-    const direction = {
-      lat: lastPing.lat - previousPing.lat,
-      lng: lastPing.lng - previousPing.lng,
-    };
-
-    if (Math.abs(direction.lat) < 0.0001 && Math.abs(direction.lng) < 0.0001) {
-      direction.lat = (Math.random() - 0.5) * 0.002;
-      direction.lng = (Math.random() - 0.5) * 0.002;
-    }
-
-    const speed = 0.3 + Math.random() * 0.4;
-    let newPosition = {
-      lat: lastPing.lat + direction.lat * speed,
-      lng: lastPing.lng + direction.lng * speed,
-    };
-
-    newPosition = addNoise(newPosition, 15);
-
-    const newPing = await prisma.locationPing.create({
-      data: {
-        deviceId: device.id,
-        lat: newPosition.lat,
-        lng: newPosition.lng,
-        accuracy: 10 + Math.random() * 15,
-        source: "simulation",
-        timestamp: new Date(),
-      },
     });
 
-    console.log(
-      `✅ ${delivery.trackingCode}: (${newPing.lat.toFixed(6)}, ${newPing.lng.toFixed(6)})`
-    );
-  }
+    if (deliveries.length === 0) {
+      console.log("⚠️  Nenhuma entrega em trânsito encontrada");
+      return;
+    }
 
-  console.log(`\n✅ ${deliveries.length} entregas atualizadas`);
+    for (const delivery of deliveries) {
+      if (!delivery.trackingDevice) continue;
+
+      const lastPing = delivery.trackingDevice.locationPings[0];
+      if (!lastPing) continue;
+
+      const newPos = moveTowards(
+        lastPing.lat,
+        lastPing.lng,
+        delivery.destinationLat || lastPing.lat,
+        delivery.destinationLng || lastPing.lng,
+        0.002
+      );
+
+      await prisma.locationPing.create({
+        data: {
+          deviceId: delivery.trackingDevice.id,
+          lat: newPos.lat,
+          lng: newPos.lng,
+          source: "simulation",
+        },
+      });
+
+      console.log(`✅ ${delivery.trackingCode}: (${newPos.lat.toFixed(6)}, ${newPos.lng.toFixed(6)})`);
+
+      if (newPos.arrived) {
+        await prisma.delivery.update({
+          where: { id: delivery.id },
+          data: { status: "ENTREGUE" },
+        });
+        console.log(`🎉 ${delivery.trackingCode} chegou ao destino!`);
+      }
+    }
+
+    console.log("✅ Atualização concluída!");
+  } catch (error) {
+    console.error("❌ Erro na atualização:", error);
+    throw error;
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
-main()
-  .catch((e) => {
-    console.error("❌ Erro:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+simulateMovementOnce();
