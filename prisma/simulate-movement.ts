@@ -33,14 +33,7 @@ async function simulateMovement() {
     const deliveries = await prisma.delivery.findMany({
       where: { status: "EM_TRANSITO" },
       include: {
-        trackingDevice: {
-          include: {
-            locationPings: {
-              orderBy: { timestamp: "desc" },
-              take: 1,
-            },
-          },
-        },
+        trackingDevice: true,
       },
     });
 
@@ -52,25 +45,29 @@ async function simulateMovement() {
     for (const delivery of deliveries) {
       if (!delivery.trackingDevice) continue;
 
-      const lastPing = delivery.trackingDevice.locationPings[0];
-      if (!lastPing) continue;
+      // Busca o último ping
+      const lastPing = await prisma.$queryRaw<Array<{lat: number, lng: number}>>`
+        SELECT lat, lng FROM "LocationPing"
+        WHERE "deviceId" = ${delivery.trackingDevice.id}
+        ORDER BY timestamp DESC
+        LIMIT 1
+      `;
+
+      if (!lastPing || lastPing.length === 0) continue;
 
       const newPos = moveTowards(
-        lastPing.lat,
-        lastPing.lng,
-        delivery.destinationLat || lastPing.lat,
-        delivery.destinationLng || lastPing.lng,
+        lastPing[0].lat,
+        lastPing[0].lng,
+        delivery.destinationLat || lastPing[0].lat,
+        delivery.destinationLng || lastPing[0].lng,
         0.002
       );
 
-      await prisma.locationPing.create({
-        data: {
-          deviceId: delivery.trackingDevice.id,
-          lat: newPos.lat,
-          lng: newPos.lng,
-          source: "simulation",
-        },
-      });
+      // Cria novo ping
+      await prisma.$executeRaw`
+        INSERT INTO "LocationPing" ("deviceId", lat, lng, source, timestamp)
+        VALUES (${delivery.trackingDevice.id}, ${newPos.lat}, ${newPos.lng}, 'simulation', NOW())
+      `;
 
       console.log(`✅ ${delivery.trackingCode}: (${newPos.lat.toFixed(6)}, ${newPos.lng.toFixed(6)})`);
 
