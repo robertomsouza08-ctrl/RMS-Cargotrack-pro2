@@ -30,12 +30,24 @@ async function simulateMovementOnce() {
   console.log("🚚 Atualizando posições das entregas...");
 
   try {
-    const deliveries = await prisma.delivery.findMany({
-      where: { status: "EM_TRANSITO" },
-      include: {
-        trackingDevice: true,
-      },
-    });
+    // Busca entregas em trânsito com seus dispositivos
+    const deliveries = await prisma.$queryRaw<Array<{
+      id: string;
+      trackingCode: string;
+      destinationLat: number | null;
+      destinationLng: number | null;
+      deviceId: string;
+    }>>`
+      SELECT 
+        d.id, 
+        d."trackingCode", 
+        d."destinationLat", 
+        d."destinationLng",
+        td.id as "deviceId"
+      FROM "Delivery" d
+      LEFT JOIN "TrackingDevice" td ON td."deliveryId" = d.id
+      WHERE d.status = 'EM_TRANSITO'
+    `;
 
     if (deliveries.length === 0) {
       console.log("⚠️  Nenhuma entrega em trânsito encontrada");
@@ -43,12 +55,12 @@ async function simulateMovementOnce() {
     }
 
     for (const delivery of deliveries) {
-      if (!delivery.trackingDevice) continue;
+      if (!delivery.deviceId) continue;
 
       // Busca o último ping
       const lastPing = await prisma.$queryRaw<Array<{lat: number, lng: number}>>`
         SELECT lat, lng FROM "LocationPing"
-        WHERE "deviceId" = ${delivery.trackingDevice.id}
+        WHERE "deviceId" = ${delivery.deviceId}
         ORDER BY timestamp DESC
         LIMIT 1
       `;
@@ -65,17 +77,18 @@ async function simulateMovementOnce() {
 
       // Cria novo ping
       await prisma.$executeRaw`
-        INSERT INTO "LocationPing" ("deviceId", lat, lng, source, timestamp)
-        VALUES (${delivery.trackingDevice.id}, ${newPos.lat}, ${newPos.lng}, 'simulation', NOW())
+        INSERT INTO "LocationPing" (id, "deviceId", lat, lng, source, timestamp)
+        VALUES (gen_random_uuid(), ${delivery.deviceId}, ${newPos.lat}, ${newPos.lng}, 'simulation', NOW())
       `;
 
       console.log(`✅ ${delivery.trackingCode}: (${newPos.lat.toFixed(6)}, ${newPos.lng.toFixed(6)})`);
 
       if (newPos.arrived) {
-        await prisma.delivery.update({
-          where: { id: delivery.id },
-          data: { status: "ENTREGUE" },
-        });
+        await prisma.$executeRaw`
+          UPDATE "Delivery" 
+          SET status = 'ENTREGUE', "updatedAt" = NOW()
+          WHERE id = ${delivery.id}
+        `;
         console.log(`🎉 ${delivery.trackingCode} chegou ao destino!`);
       }
     }
