@@ -3,10 +3,11 @@
   "name": "rms-cargotrack-pro-simple",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "prisma migrate deploy && node prisma/check-seed.js && npx tsx prisma/seed-deliveries.ts && next start",
+    "start": "prisma migrate deploy && node prisma/init-db.js && next start",
     "lint": "next lint"
   },
   "dependencies": {
