@@ -1,109 +1,124 @@
 
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-// Adiciona ruído GPS
-function addNoise(coord: { lat: number; lng: number }, meters: number = 20) {
-  const latOffset = (Math.random() - 0.5) * (meters / 111000);
-  const lngOffset = (Math.random() - 0.5) * (meters / 111000);
+const prisma = new PrismaClient();
+
+function moveTowards(
+  currentLat: number,
+  currentLng: number,
+  targetLat: number,
+  targetLng: number,
+  stepSize: number = 0.001
+) {
+  const latDiff = targetLat - currentLat;
+  const lngDiff = targetLng - currentLng;
+  const distance = Math.sqrt(latDiff ** 2 + lngDiff ** 2);
+
+  if (distance < stepSize) {
+    return { lat: targetLat, lng: targetLng, arrived: true };
+  }
+
+  const ratio = stepSize / distance;
   return {
-    lat: coord.lat + latOffset,
-    lng: coord.lng + lngOffset,
+    lat: currentLat + latDiff * ratio,
+    lng: currentLng + lngDiff * ratio,
+    arrived: false,
   };
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    // Segurança: verifica token de autorização (opcional)
+    // Verifica o token de autenticação (opcional, mas recomendado)
     const authHeader = request.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET || "your-secret-key";
-
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const deliveries = await prisma.delivery.findMany({
-      where: { status: "EM_TRANSITO" },
-      include: {
-        trackingDevice: {
-          include: {
-            locationPings: {
-              orderBy: { timestamp: "desc" },
-              take: 2,
-            },
-          },
-        },
-      },
-    });
+    // Busca entregas em trânsito com seus dispositivos
+    const deliveries = await prisma.$queryRaw<Array<{
+      id: string;
+      trackingCode: string;
+      destinationLat: number | null;
+      destinationLng: number | null;
+      deviceId: string;
+    }>>`
+      SELECT 
+        d.id, 
+        d."trackingCode", 
+        d."destinationLat", 
+        d."destinationLng",
+        td.id as "deviceId"
+      FROM "Delivery" d
+      LEFT JOIN "TrackingDevice" td ON td."deliveryId" = d.id
+      WHERE d.status = 'EM_TRANSITO'
+    `;
+
+    if (deliveries.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: "Nenhuma entrega em trânsito",
+        updated: 0,
+      });
+    }
 
     let updated = 0;
+    const results = [];
 
     for (const delivery of deliveries) {
-      const device = delivery.trackingDevice;
-      if (!device || !device.isActive) continue;
+      if (!delivery.deviceId) continue;
 
-      const pings = device.locationPings;
-      if (pings.length === 0) continue;
+      // Busca o último ping
+      const lastPing = await prisma.$queryRaw<Array<{lat: number, lng: number}>>`
+        SELECT lat, lng FROM "LocationPing"
+        WHERE "deviceId" = ${delivery.deviceId}
+        ORDER BY timestamp DESC
+        LIMIT 1
+      `;
 
-      const lastPing = pings[0];
-      const previousPing = pings[1] || lastPing;
+      if (!lastPing || lastPing.length === 0) continue;
 
-      const direction = {
-        lat: lastPing.lat - previousPing.lat,
-        lng: lastPing.lng - previousPing.lng,
-      };
+      const newPos = moveTowards(
+        lastPing[0].lat,
+        lastPing[0].lng,
+        delivery.destinationLat || lastPing[0].lat,
+        delivery.destinationLng || lastPing[0].lng,
+        0.002
+      );
 
-      if (Math.abs(direction.lat) < 0.0001 && Math.abs(direction.lng) < 0.0001) {
-        direction.lat = (Math.random() - 0.5) * 0.002;
-        direction.lng = (Math.random() - 0.5) * 0.002;
-      }
-
-      const speed = 0.3 + Math.random() * 0.4;
-      let newPosition = {
-        lat: lastPing.lat + direction.lat * speed,
-        lng: lastPing.lng + direction.lng * speed,
-      };
-
-      newPosition = addNoise(newPosition, 15);
-
-      await prisma.locationPing.create({
-        data: {
-          deviceId: device.id,
-          lat: newPosition.lat,
-          lng: newPosition.lng,
-          accuracy: 10 + Math.random() * 15,
-          source: "cron-simulation",
-          timestamp: new Date(),
-        },
-      });
+      // Cria novo ping
+      await prisma.$executeRaw`
+        INSERT INTO "LocationPing" (id, "deviceId", lat, lng, source, timestamp)
+        VALUES (gen_random_uuid(), ${delivery.deviceId}, ${newPos.lat}, ${newPos.lng}, 'cron', NOW())
+      `;
 
       updated++;
-
-      // Limita histórico
-      const totalPings = await prisma.locationPing.count({
-        where: { deviceId: device.id },
+      results.push({
+        trackingCode: delivery.trackingCode,
+        position: { lat: newPos.lat, lng: newPos.lng },
+        arrived: newPos.arrived,
       });
 
-      if (totalPings > 50) {
-        const oldPings = await prisma.locationPing.findMany({
-          where: { deviceId: device.id },
-          orderBy: { timestamp: "asc" },
-          take: totalPings - 50,
-        });
-
-        await prisma.locationPing.deleteMany({
-          where: { id: { in: oldPings.map((p) => p.id) } },
-        });
+      if (newPos.arrived) {
+        await prisma.$executeRaw`
+          UPDATE "Delivery" 
+          SET status = 'ENTREGUE', "updatedAt" = NOW()
+          WHERE id = ${delivery.id}
+        `;
       }
     }
 
     return NextResponse.json({
       success: true,
+      message: `${updated} entregas atualizadas`,
       updated,
-      timestamp: new Date().toISOString(),
+      results,
     });
   } catch (error) {
-    console.error("Erro na simulação:", error);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+    console.error("Erro ao simular movimento:", error);
+    return NextResponse.json(
+      { error: "Erro ao simular movimento" },
+      { status: 500 }
+    );
   }
 }
