@@ -36,7 +36,7 @@ export default function TrackingPage() {
   useEffect(() => {
     if (status === "authenticated") {
       fetchDeliveries();
-      const interval = setInterval(fetchDeliveries, 10000); // atualiza a cada 10s
+      const interval = setInterval(fetchDeliveries, 10000);
       return () => clearInterval(interval);
     }
   }, [status]);
@@ -137,7 +137,6 @@ export default function TrackingPage() {
               gridTemplateColumns: "minmax(280px, 1fr) 2fr",
               gap: 20,
             }}>
-              {/* Lista de entregas */}
               <div style={{
                 background: "rgba(255, 255, 255, 0.95)",
                 backdropFilter: "blur(10px)",
@@ -190,7 +189,6 @@ export default function TrackingPage() {
                 </div>
               </div>
 
-              {/* Mapa e detalhes */}
               <div style={{
                 background: "rgba(255, 255, 255, 0.95)",
                 backdropFilter: "blur(10px)",
