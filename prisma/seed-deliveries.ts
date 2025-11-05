@@ -3,150 +3,182 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Coordenadas de exemplo (São Paulo e região)
 const routes = [
   {
-    trackingCode: "RMS-SP-001",
-    origin: "São Paulo - Centro",
-    destination: "Guarulhos - Aeroporto",
+    trackingCode: "RMS2024001",
+    origin: "São Paulo, SP",
+    destination: "Rio de Janeiro, RJ",
+    originLat: -23.5505,
+    originLng: -46.6333,
+    destinationLat: -22.9068,
+    destinationLng: -43.1729,
     status: "EM_TRANSITO",
-    route: [
-      { lat: -23.5505, lng: -46.6333 }, // Centro SP
-      { lat: -23.5489, lng: -46.6388 },
-      { lat: -23.5401, lng: -46.6395 },
-      { lat: -23.5298, lng: -46.6289 },
-      { lat: -23.5105, lng: -46.6178 },
-      { lat: -23.4956, lng: -46.6089 },
-      { lat: -23.4356, lng: -46.4731 }, // Aeroporto Guarulhos
-    ],
   },
   {
-    trackingCode: "RMS-SP-002",
-    origin: "Santos - Porto",
-    destination: "São Paulo - Vila Mariana",
+    trackingCode: "RMS2024002",
+    origin: "Belo Horizonte, MG",
+    destination: "Brasília, DF",
+    originLat: -19.9167,
+    originLng: -43.9345,
+    destinationLat: -15.7939,
+    destinationLng: -47.8828,
     status: "EM_TRANSITO",
-    route: [
-      { lat: -23.9608, lng: -46.3335 }, // Porto de Santos
-      { lat: -23.9456, lng: -46.3289 },
-      { lat: -23.8789, lng: -46.3567 },
-      { lat: -23.7956, lng: -46.4123 },
-      { lat: -23.6889, lng: -46.5012 },
-      { lat: -23.5945, lng: -46.6334 }, // Vila Mariana
-    ],
   },
   {
-    trackingCode: "RMS-SP-003",
-    origin: "Campinas - Centro",
-    destination: "São Paulo - Pinheiros",
+    trackingCode: "RMS2024003",
+    origin: "Curitiba, PR",
+    destination: "Florianópolis, SC",
+    originLat: -25.4284,
+    originLng: -49.2733,
+    destinationLat: -27.5954,
+    destinationLng: -48.5480,
     status: "EM_TRANSITO",
-    route: [
-      { lat: -22.9056, lng: -47.0608 }, // Campinas
-      { lat: -22.9234, lng: -47.0456 },
-      { lat: -23.0123, lng: -46.9234 },
-      { lat: -23.1456, lng: -46.8123 },
-      { lat: -23.3234, lng: -46.7456 },
-      { lat: -23.5645, lng: -46.6912 }, // Pinheiros
-    ],
   },
   {
-    trackingCode: "RMS-RJ-001",
-    origin: "Rio de Janeiro - Centro",
-    destination: "Niterói - Centro",
+    trackingCode: "RMS2024004",
+    origin: "Porto Alegre, RS",
+    destination: "São Paulo, SP",
+    originLat: -30.0346,
+    originLng: -51.2177,
+    destinationLat: -23.5505,
+    destinationLng: -46.6333,
     status: "EM_TRANSITO",
-    route: [
-      { lat: -22.9068, lng: -43.1729 }, // Centro RJ
-      { lat: -22.9035, lng: -43.1765 },
-      { lat: -22.8968, lng: -43.1812 },
-      { lat: -22.8834, lng: -43.1034 }, // Niterói
-    ],
   },
   {
-    trackingCode: "RMS-SP-004",
-    origin: "São Paulo - Itaquera",
-    destination: "São Paulo - Morumbi",
+    trackingCode: "RMS2024005",
+    origin: "Salvador, BA",
+    destination: "Recife, PE",
+    originLat: -12.9714,
+    originLng: -38.5014,
+    destinationLat: -8.0476,
+    destinationLng: -34.8770,
     status: "EM_TRANSITO",
-    route: [
-      { lat: -23.5401, lng: -46.4556 }, // Itaquera
-      { lat: -23.5456, lng: -46.5123 },
-      { lat: -23.5512, lng: -46.5789 },
-      { lat: -23.5634, lng: -46.6234 },
-      { lat: -23.6234, lng: -46.6989 }, // Morumbi
-    ],
   },
 ];
 
-async function main() {
-  console.log("🚀 Iniciando seed de entregas...");
-
-  for (const routeData of routes) {
-    console.log(`\n📦 Criando entrega: ${routeData.trackingCode}`);
-
-    // Verifica se já existe
-    const existing = await prisma.delivery.findUnique({
-      where: { trackingCode: routeData.trackingCode },
+function interpolateRoute(
+  originLat: number,
+  originLng: number,
+  destLat: number,
+  destLng: number,
+  steps: number = 10
+) {
+  const points = [];
+  for (let i = 0; i <= steps; i++) {
+    const ratio = i / steps;
+    points.push({
+      lat: originLat + (destLat - originLat) * ratio,
+      lng: originLng + (destLng - originLng) * ratio,
     });
-
-    if (existing) {
-      console.log(`   ⚠️  Entrega ${routeData.trackingCode} já existe, pulando...`);
-      continue;
-    }
-
-    // Cria a entrega
-    const delivery = await prisma.delivery.create({
-      data: {
-        trackingCode: routeData.trackingCode,
-        origin: routeData.origin,
-        destination: routeData.destination,
-        status: routeData.status,
-      },
-    });
-
-    console.log(`   ✅ Entrega criada: ${delivery.id}`);
-
-    // Cria o dispositivo de rastreamento
-    const device = await prisma.trackingDevice.create({
-      data: {
-        deliveryId: delivery.id,
-        deviceIdentifier: `DEVICE-${routeData.trackingCode}`,
-        isActive: true,
-      },
-    });
-
-    console.log(`   ✅ Dispositivo criado: ${device.id}`);
-
-    // Cria os pings de localização (simulando trajeto)
-    const now = new Date();
-    const pings = routeData.route.map((coord, index) => {
-      // Cada ping é 5 minutos depois do anterior
-      const timestamp = new Date(now.getTime() - (routeData.route.length - index - 1) * 5 * 60 * 1000);
-      return {
-        deviceId: device.id,
-        lat: coord.lat,
-        lng: coord.lng,
-        accuracy: Math.random() * 20 + 10, // 10-30 metros
-        source: "seed",
-        timestamp,
-      };
-    });
-
-    await prisma.locationPing.createMany({
-      data: pings,
-    });
-
-    console.log(`   ✅ ${pings.length} pings de localização criados`);
   }
-
-  console.log("\n✅ Seed de entregas concluído!");
-  console.log(`\n📊 Resumo:`);
-  console.log(`   - ${routes.length} entregas criadas`);
-  console.log(`   - ${routes.reduce((acc, r) => acc + r.route.length, 0)} pings de localização`);
+  return points;
 }
 
-main()
-  .catch((e) => {
-    console.error("❌ Erro no seed:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
+async function seedDeliveries() {
+  console.log("🌱 Criando entregas de teste...");
+
+  try {
+    for (const routeData of routes) {
+      // Verifica se já existe usando SQL Raw
+      const existing = await prisma.$queryRaw<Array<{id: string}>>`
+        SELECT id FROM "Delivery" WHERE "trackingCode" = ${routeData.trackingCode}
+      `;
+
+      if (existing.length > 0) {
+        console.log(`⏭️  ${routeData.trackingCode} já existe, pulando...`);
+        continue;
+      }
+
+      // Cria a entrega
+      const deliveryResult = await prisma.$queryRaw<Array<{id: string}>>`
+        INSERT INTO "Delivery" (
+          id, "trackingCode", origin, destination, 
+          "originLat", "originLng", "destinationLat", "destinationLng",
+          status, "createdAt", "updatedAt"
+        )
+        VALUES (
+          gen_random_uuid(),
+          ${routeData.trackingCode},
+          ${routeData.origin},
+          ${routeData.destination},
+          ${routeData.originLat},
+          ${routeData.originLng},
+          ${routeData.destinationLat},
+          ${routeData.destinationLng},
+          ${routeData.status},
+          NOW(),
+          NOW()
+        )
+        RETURNING id
+      `;
+
+      const deliveryId = deliveryResult[0]?.id;
+      if (!deliveryId) {
+        console.error(`❌ Erro ao criar entrega ${routeData.trackingCode}`);
+        continue;
+      }
+
+      // Cria o dispositivo de rastreamento
+      const deviceResult = await prisma.$queryRaw<Array<{id: string}>>`
+        INSERT INTO "TrackingDevice" (
+          id, "deviceId", "deliveryId", "isActive", "createdAt", "updatedAt"
+        )
+        VALUES (
+          gen_random_uuid(),
+          ${`DEVICE-${routeData.trackingCode}`},
+          ${deliveryId},
+          true,
+          NOW(),
+          NOW()
+        )
+        RETURNING id
+      `;
+
+      const deviceDbId = deviceResult[0]?.id;
+      if (!deviceDbId) {
+        console.error(`❌ Erro ao criar dispositivo para ${routeData.trackingCode}`);
+        continue;
+      }
+
+      // Gera pontos da rota
+      const routePoints = interpolateRoute(
+        routeData.originLat,
+        routeData.originLng,
+        routeData.destinationLat,
+        routeData.destinationLng,
+        10
+      );
+
+      // Cria os pings de localização (apenas os primeiros 3 pontos)
+      for (let i = 0; i < Math.min(3, routePoints.length); i++) {
+        const point = routePoints[i];
+        const timestamp = new Date(Date.now() - (routePoints.length - i) * 3600000);
+
+        await prisma.$executeRaw`
+          INSERT INTO "LocationPing" (
+            id, "deviceId", lat, lng, source, timestamp
+          )
+          VALUES (
+            gen_random_uuid(),
+            ${deviceDbId},
+            ${point.lat},
+            ${point.lng},
+            'seed',
+            ${timestamp}
+          )
+        `;
+      }
+
+      console.log(`✅ ${routeData.trackingCode} criado com sucesso!`);
+    }
+
+    console.log("🎉 Seed de entregas concluído!");
+  } catch (error) {
+    console.error("❌ Erro ao criar entregas:", error);
+    throw error;
+  } finally {
     await prisma.$disconnect();
-  });
+  }
+}
+
+seedDeliveries();
