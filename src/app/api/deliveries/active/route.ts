@@ -11,8 +11,6 @@ export async function GET() {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    // Busca entregas ativas (exemplo: status EM_TRANSITO)
-    // Ajuste conforme seu schema Prisma
     const deliveries = await prisma.delivery.findMany({
       where: {
         status: "EM_TRANSITO",
