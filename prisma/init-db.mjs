@@ -21,7 +21,7 @@ async function initDatabase() {
     if (tables.length < 7) {
       console.log("⚠️  Algumas tabelas estão faltando. Criando...");
 
-      // Cria as tabelas manualmente
+      // Cria cada tabela separadamente
       await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "User" (
           id TEXT PRIMARY KEY,
@@ -33,8 +33,10 @@ async function initDatabase() {
           role TEXT DEFAULT 'USER',
           "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+        )
+      `);
 
+      await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "Account" (
           id TEXT PRIMARY KEY,
           "userId" TEXT NOT NULL,
@@ -49,23 +51,29 @@ async function initDatabase() {
           id_token TEXT,
           session_state TEXT,
           CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"(id) ON DELETE CASCADE
-        );
+        )
+      `);
 
+      await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "Session" (
           id TEXT PRIMARY KEY,
           "sessionToken" TEXT UNIQUE NOT NULL,
           "userId" TEXT NOT NULL,
           expires TIMESTAMP NOT NULL,
           CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"(id) ON DELETE CASCADE
-        );
+        )
+      `);
 
+      await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "VerificationToken" (
           identifier TEXT NOT NULL,
           token TEXT UNIQUE NOT NULL,
           expires TIMESTAMP NOT NULL,
           PRIMARY KEY (identifier, token)
-        );
+        )
+      `);
 
+      await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "Delivery" (
           id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
           "trackingCode" TEXT UNIQUE NOT NULL,
@@ -78,8 +86,10 @@ async function initDatabase() {
           "originLng" DOUBLE PRECISION,
           "destinationLat" DOUBLE PRECISION,
           "destinationLng" DOUBLE PRECISION
-        );
+        )
+      `);
 
+      await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "TrackingDevice" (
           id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
           "deviceId" TEXT UNIQUE NOT NULL,
@@ -87,8 +97,10 @@ async function initDatabase() {
           "isActive" BOOLEAN DEFAULT true,
           "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           CONSTRAINT "TrackingDevice_deliveryId_fkey" FOREIGN KEY ("deliveryId") REFERENCES "Delivery"(id) ON DELETE CASCADE
-        );
+        )
+      `);
 
+      await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "LocationPing" (
           id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
           "deviceId" TEXT NOT NULL,
@@ -97,13 +109,14 @@ async function initDatabase() {
           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           source TEXT DEFAULT 'gps',
           CONSTRAINT "LocationPing_deviceId_fkey" FOREIGN KEY ("deviceId") REFERENCES "TrackingDevice"(id) ON DELETE CASCADE
-        );
-
-        CREATE INDEX IF NOT EXISTS "Account_userId_idx" ON "Account"("userId");
-        CREATE INDEX IF NOT EXISTS "Session_userId_idx" ON "Session"("userId");
-        CREATE INDEX IF NOT EXISTS "TrackingDevice_deliveryId_idx" ON "TrackingDevice"("deliveryId");
-        CREATE INDEX IF NOT EXISTS "LocationPing_deviceId_idx" ON "LocationPing"("deviceId");
+        )
       `);
+
+      // Cria índices
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Account_userId_idx" ON "Account"("userId")`);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Session_userId_idx" ON "Session"("userId")`);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "TrackingDevice_deliveryId_idx" ON "TrackingDevice"("deliveryId")`);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "LocationPing_deviceId_idx" ON "LocationPing"("deviceId")`);
 
       console.log("✅ Tabelas criadas com sucesso!");
     } else {
@@ -182,45 +195,49 @@ async function initDatabase() {
       ];
 
       for (const delivery of deliveries) {
-        // Cria a entrega
-        await prisma.$executeRaw`
-          INSERT INTO "Delivery" (id, "trackingCode", origin, destination, status, "originLat", "originLng", "destinationLat", "destinationLng")
-          VALUES (gen_random_uuid()::text, ${delivery.trackingCode}, ${delivery.origin}, ${delivery.destination}, ${delivery.status}, ${delivery.originLat}, ${delivery.originLng}, ${delivery.destinationLat}, ${delivery.destinationLng})
-          ON CONFLICT ("trackingCode") DO NOTHING
-        `;
-
-        // Busca o ID da entrega
-        const result = await prisma.$queryRaw`
-          SELECT id FROM "Delivery" WHERE "trackingCode" = ${delivery.trackingCode}
-        `;
-
-        if (result && result[0]) {
-          const deliveryId = result[0].id;
-          const deviceId = `DEVICE-${delivery.trackingCode}`;
-
-          // Cria o dispositivo
+        try {
+          // Cria a entrega
           await prisma.$executeRaw`
-            INSERT INTO "TrackingDevice" (id, "deviceId", "deliveryId", "isActive")
-            VALUES (gen_random_uuid()::text, ${deviceId}, ${deliveryId}, true)
-            ON CONFLICT ("deviceId") DO NOTHING
+            INSERT INTO "Delivery" (id, "trackingCode", origin, destination, status, "originLat", "originLng", "destinationLat", "destinationLng")
+            VALUES (gen_random_uuid()::text, ${delivery.trackingCode}, ${delivery.origin}, ${delivery.destination}, ${delivery.status}, ${delivery.originLat}, ${delivery.originLng}, ${delivery.destinationLat}, ${delivery.destinationLng})
+            ON CONFLICT ("trackingCode") DO NOTHING
           `;
 
-          // Busca o ID do dispositivo
-          const deviceResult = await prisma.$queryRaw`
-            SELECT id FROM "TrackingDevice" WHERE "deviceId" = ${deviceId}
+          // Busca o ID da entrega
+          const result = await prisma.$queryRaw`
+            SELECT id FROM "Delivery" WHERE "trackingCode" = ${delivery.trackingCode}
           `;
 
-          if (deviceResult && deviceResult[0]) {
-            const trackingDeviceId = deviceResult[0].id;
+          if (result && result[0]) {
+            const deliveryId = result[0].id;
+            const deviceId = `DEVICE-${delivery.trackingCode}`;
 
-            // Cria posição inicial
+            // Cria o dispositivo
             await prisma.$executeRaw`
-              INSERT INTO "LocationPing" (id, "deviceId", lat, lng, source)
-              VALUES (gen_random_uuid()::text, ${trackingDeviceId}, ${delivery.originLat}, ${delivery.originLng}, 'gps')
+              INSERT INTO "TrackingDevice" (id, "deviceId", "deliveryId", "isActive")
+              VALUES (gen_random_uuid()::text, ${deviceId}, ${deliveryId}, true)
+              ON CONFLICT ("deviceId") DO NOTHING
             `;
 
-            console.log(`✅ ${delivery.trackingCode} criado com sucesso!`);
+            // Busca o ID do dispositivo
+            const deviceResult = await prisma.$queryRaw`
+              SELECT id FROM "TrackingDevice" WHERE "deviceId" = ${deviceId}
+            `;
+
+            if (deviceResult && deviceResult[0]) {
+              const trackingDeviceId = deviceResult[0].id;
+
+              // Cria posição inicial
+              await prisma.$executeRaw`
+                INSERT INTO "LocationPing" (id, "deviceId", lat, lng, source)
+                VALUES (gen_random_uuid()::text, ${trackingDeviceId}, ${delivery.originLat}, ${delivery.originLng}, 'gps')
+              `;
+
+              console.log(`✅ ${delivery.trackingCode} criado com sucesso!`);
+            }
           }
+        } catch (err) {
+          console.log(`⚠️  ${delivery.trackingCode} já existe ou erro ao criar.`);
         }
       }
 
